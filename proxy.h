@@ -20,13 +20,17 @@
               offsetof(type, member)))
 #endif
 
-#define __PROXY_FUNC_NAME(func) PROXY_NAME(func)
+#define ___PROXY_COMBINE(X, Y) X##Y
+#define __PROXY_COMBINE(X, Y) ___PROXY_COMBINE(X, Y)
+
+#define __PROXY_FUNC_NAME(func) __PROXY_COMBINE(func, PROXY_NAME)
 
 #define __PROXY_GET_FUNC_NAME(func) .func = &__PROXY_FUNC_NAME(__proxy##func)
 
 #define PROXY_DEFINE(proxy_name, ...)                                          \
-    typeof(*((struct proxy_name *)NULL)->api) PROXY_NAME(                      \
-        proxy_name##_proxy_) = {MAP_LIST(__PROXY_GET_FUNC_NAME, __VA_ARGS__)};
+    typeof(*((struct proxy_name *)NULL)->api) __PROXY_COMBINE(                 \
+        __PROXY_COMBINE(__, proxy_name##_proxy_),                              \
+        PROXY_NAME) = {MAP_LIST(__PROXY_GET_FUNC_NAME, __VA_ARGS__)};
 
 #define ___PROXY_FUNC_HEAD(rettype, func, ...)                                 \
     static rettype __PROXY_FUNC_NAME(__proxy##func)(                           \
@@ -34,7 +38,7 @@
 
 #define ___PROXY_FUNC_BODY(member, rettype, func, ...)                         \
     {                                                                          \
-        return (*(struct PROXY_NAME() *)p)member func(                         \
+        return (*(struct PROXY_NAME *)p)member func(                           \
             p, __PROXY_EXPAND __VA_ARGS__);                                    \
     }
 
@@ -51,3 +55,12 @@
                        (MAP_LIST(__PROXY_ARG_DEFINE, __VA_ARGS__)))            \
     ___PROXY_FUNC_BODY(member, rettype, func,                                  \
                        (MAP_LIST(__PROXY_FETCH_ARG_NAME, __VA_ARGS__)))
+
+// instantiate
+#define PROXY_INSTANTIATE(proxy_declare_name, proxy_dispatch_name, instance)   \
+    &(struct proxy_declare_name)                                               \
+    {                                                                          \
+        .self = instance,                                                      \
+        .api = &__PROXY_COMBINE(__PROXY_COMBINE(__, proxy_declare_name),       \
+                                _proxy_##proxy_dispatch_name)                  \
+    }

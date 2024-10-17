@@ -17,7 +17,8 @@ struct test {
     } *api;
     int ret;
 };
-#define PROXY_NAME(X) X##test
+
+#define PROXY_NAME test
 
 PROXY_FUNC_DISPATCH(.api->, int, sub, (int, a), (int, b))
 PROXY_FUNC_DISPATCH(.api->, int, mul, (int, a), (int, b))
@@ -25,13 +26,6 @@ PROXY_FUNC_DISPATCH(.api->, int, add, (int, a), (int, b))
 PROXY_DEFINE(cal, sub, mul, add)
 
 #undef PROXY_NAME
-
-#define PROXY_INSTANTIATE(proxy_declare_name, proxy_dispatch_name, instance)   \
-    &(struct proxy_declare_name)                                               \
-    {                                                                          \
-        .self = instance,                                                      \
-        .api = &proxy_declare_name##_proxy_##proxy_dispatch_name               \
-    }
 
 int test_add(struct test *self, int a, int b)
 {
