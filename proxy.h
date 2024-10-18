@@ -1,3 +1,7 @@
+#define COMPARE_void(x) x
+#define __PROXY_RETURN_1 return
+#define __PROXY_RETURN_0
+
 // declare
 #define ___PROXY_FUNC_DECLARE(rettype, name, ...)                              \
     rettype (*name)(void *self __VA_OPT__(, ) __VA_ARGS__);
@@ -14,11 +18,7 @@
 
 // dispatch
 
-#ifndef container_of
-#define container_of(ptr, type, member)                                        \
-    ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) -                     \
-              offsetof(type, member)))
-#endif
+#define __PROXY_RETURN_void
 
 #define ___PROXY_COMBINE(X, Y) X##Y
 #define __PROXY_COMBINE(X, Y) ___PROXY_COMBINE(X, Y)
@@ -38,8 +38,9 @@
 
 #define ___PROXY_FUNC_BODY(member, rettype, func, ...)                         \
     {                                                                          \
-        return (*(struct PROXY_NAME *)p)member func(                           \
-            p __VA_OPT__(, __PROXY_EXPAND) __VA_ARGS__);                       \
+        __PROXY_COMBINE(__PROXY_RETURN_, NOT_EQUAL(void, rettype))             \
+        (*(struct PROXY_NAME *)p) member func(p __VA_OPT__(, __PROXY_EXPAND)   \
+                                                  __VA_ARGS__);                \
     }
 
 #define __PROXY_EXPAND(...) __VA_ARGS__

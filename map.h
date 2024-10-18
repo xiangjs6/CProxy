@@ -54,4 +54,37 @@
 #define MAP_LIST(f, ...)                                                       \
     EVAL(MAP_LIST1(f, __VA_ARGS__, ()()(), ()()(), ()()(), 0))
 
+
+#define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
+#define PRIMITIVE_CAT(a, ...) a##__VA_ARGS__
+
+#define COMPL(b) PRIMITIVE_CAT(COMPL_, b)
+#define COMPL_0 1
+#define COMPL_1 0
+
+#define BITAND(x) PRIMITIVE_CAT(BITAND_, x)
+#define BITAND_0(y) 0
+#define BITAND_1(y) y
+
+#define CHECK_N(x, n, ...) n
+#define CHECK(...) CHECK_N(__VA_ARGS__, 0, )
+#define PROBE(x) x, 1,
+
+#define IS_PAREN(x) CHECK(IS_PAREN_PROBE x)
+#define IS_PAREN_PROBE(...) PROBE(~)
+
+#define IIF(c) PRIMITIVE_CAT(IIF_, c)
+#define IIF_0(t, ...) __VA_ARGS__
+#define IIF_1(t, ...) t
+
+#define EAT(...)
+
+#define PRIMITIVE_COMPARE(x, y) IS_PAREN(COMPARE_##x(COMPARE_##y)(()))
+
+#define IS_COMPARABLE(x) IS_PAREN(CAT(COMPARE_, x)(()))
+
+#define NOT_EQUAL(x, y)                                                        \
+  IIF(BITAND(IS_COMPARABLE(x))(IS_COMPARABLE(y)))                              \
+  (PRIMITIVE_COMPARE, 1 EAT)(x, y)
+
 #endif
