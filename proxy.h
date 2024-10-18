@@ -1,6 +1,6 @@
 // declare
 #define ___PROXY_FUNC_DECLARE(rettype, name, ...)                              \
-    rettype (*name)(void *self, __VA_ARGS__);
+    rettype (*name)(void *self __VA_OPT__(, ) __VA_ARGS__);
 #define __PROXY_FUNC_DECLARE(X) ___PROXY_FUNC_DECLARE X
 #define PROXY_FUNC_DECLARE(rettype, name, ...) (rettype, name, __VA_ARGS__)
 
@@ -34,12 +34,12 @@
 
 #define ___PROXY_FUNC_HEAD(rettype, func, ...)                                 \
     static rettype __PROXY_FUNC_NAME(__proxy##func)(                           \
-        void *p, __PROXY_EXPAND __VA_ARGS__)
+        void *p __VA_OPT__(, __PROXY_EXPAND) __VA_ARGS__)
 
 #define ___PROXY_FUNC_BODY(member, rettype, func, ...)                         \
     {                                                                          \
         return (*(struct PROXY_NAME *)p)member func(                           \
-            p, __PROXY_EXPAND __VA_ARGS__);                                    \
+            p __VA_OPT__(, __PROXY_EXPAND) __VA_ARGS__);                       \
     }
 
 #define __PROXY_EXPAND(...) __VA_ARGS__
@@ -51,10 +51,12 @@
 #define __PROXY_FETCH_ARG_NAME(X) ___PROXY_FETCH_ARG_NAME X
 
 #define PROXY_FUNC_DISPATCH(member, rettype, func, ...)                        \
-    ___PROXY_FUNC_HEAD(rettype, func,                                          \
-                       (MAP_LIST(__PROXY_ARG_DEFINE, __VA_ARGS__)))            \
-    ___PROXY_FUNC_BODY(member, rettype, func,                                  \
-                       (MAP_LIST(__PROXY_FETCH_ARG_NAME, __VA_ARGS__)))
+    ___PROXY_FUNC_HEAD(                                                        \
+        rettype,                                                               \
+        func __VA_OPT__(, (MAP_LIST(__PROXY_ARG_DEFINE, __VA_ARGS__))))        \
+    ___PROXY_FUNC_BODY(                                                        \
+        member, rettype,                                                       \
+        func __VA_OPT__(, (MAP_LIST(__PROXY_FETCH_ARG_NAME, __VA_ARGS__))))
 
 // instantiate
 #define PROXY_INSTANTIATE(proxy_declare_name, proxy_dispatch_name, instance)   \
