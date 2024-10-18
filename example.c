@@ -22,16 +22,6 @@ struct test {
     int ret;
 };
 
-#define PROXY_NAME test_class
-
-PROXY_FUNC_DISPATCH(int, sub, (int, a), (int, b))
-PROXY_FUNC_DISPATCH(int, mul, (int, a), (int, b))
-PROXY_FUNC_DISPATCH(int, add, (int, a), (int, b))
-PROXY_FUNC_DISPATCH(void, print)
-PROXY_DEFINE(cal, struct test, api, sub, mul, add, print)
-
-#undef PROXY_NAME
-
 int test_add(struct test *self, int a, int b)
 {
     printf("ret: %d\n", self->ret);
@@ -55,6 +45,16 @@ const static struct test_class class = {
     .mul = &test_mul,
     .print = &test_print,
 };
+#define PROXY_NAME test_class
+
+PROXY_FUNC_DISPATCH(int, sub, (int, a), (int, b))
+PROXY_FUNC_DISPATCH(int, mul, (int, a), (int, b))
+PROXY_FUNC_DISPATCH(int, add, (int, a), (int, b))
+PROXY_FUNC_DISPATCH(void, print)
+PROXY_DEFINE(cal, &class, sub, mul, add, print)
+
+#undef PROXY_NAME
+
 
 void func(struct cal *cal)
 {

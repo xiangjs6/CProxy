@@ -10,8 +10,7 @@
 
 struct __proxy {
     void *self;
-    size_t api_offset;
-    bool is_ptr;
+    const void *class;
 };
 
 #define PROXY_DECLARE(proxy_name, ...)                                         \
@@ -33,19 +32,14 @@ struct __proxy {
 
 #define __PROXY_GET_FUNC_NAME(func) .func = &__PROXY_FUNC_NAME(__proxy##func)
 
-#define PROXY_DEFINE(proxy_name, object_type, func_member, ...)                \
+#define PROXY_DEFINE(proxy_name, classname, ...)                               \
     const static struct {                                                      \
         const typeof(*((struct proxy_name *)NULL)->api) api;                   \
-        size_t api_offset;                                                     \
-        bool is_ptr;                                                           \
+        const void *class;                                                     \
     } __PROXY_COMBINE(__PROXY_COMBINE(__, proxy_name##_proxy_),                \
                       PROXY_NAME) = {                                          \
         .api = {MAP_LIST(__PROXY_GET_FUNC_NAME, __VA_ARGS__)},                 \
-        .api_offset = offsetof(object_type, func_member),                      \
-        .is_ptr = _Generic(((object_type *)NULL)->func_member,                 \
-        struct PROXY_NAME: false,                                              \
-        struct PROXY_NAME *: true,                                             \
-        const struct PROXY_NAME *: true)};
+        .class = classname};
 
 #define ___PROXY_FUNC_HEAD(rettype, func, ...)                                 \
     static rettype __PROXY_FUNC_NAME(__proxy##func)(                           \
@@ -53,13 +47,8 @@ struct __proxy {
 
 #define ___PROXY_FUNC_BODY(rettype, func, ...)                                 \
     {                                                                          \
-        if (p->is_ptr) {                                                       \
-            __PROXY_COMBINE(__PROXY_RETURN_, NOT_EQUAL(void, rettype))         \
-            (*(struct PROXY_NAME **)((char *)p->self + p->api_offset))         \
-                ->func(p->self __VA_OPT__(, __PROXY_EXPAND) __VA_ARGS__);      \
-        }                                                                      \
         __PROXY_COMBINE(__PROXY_RETURN_, NOT_EQUAL(void, rettype))             \
-        ((struct PROXY_NAME *)((char *)p->self + p->api_offset))               \
+        ((struct PROXY_NAME *)(p->class))                                      \
             ->func(p->self __VA_OPT__(, __PROXY_EXPAND) __VA_ARGS__);          \
     }
 
@@ -84,14 +73,10 @@ struct __proxy {
     &(struct proxy_declare_name)                                               \
     {                                                                          \
         .proxy.self = instance,                                                \
-        .proxy.api_offset =                                                    \
+        .proxy.class =                                                         \
             __PROXY_COMBINE(__PROXY_COMBINE(__, proxy_declare_name),           \
                             _proxy_##proxy_dispatch_name)                      \
-                .api_offset,                                                   \
-        .proxy.is_ptr =                                                        \
-            __PROXY_COMBINE(__PROXY_COMBINE(__, proxy_declare_name),           \
-                            _proxy_##proxy_dispatch_name)                      \
-                .is_ptr,                                                       \
+                .class,                                                        \
         .api = &__PROXY_COMBINE(__PROXY_COMBINE(__, proxy_declare_name),       \
                                 _proxy_##proxy_dispatch_name)                  \
                     .api                                                       \
