@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stddef.h>
 #include <stdbool.h>
 
 #include "map.h"
@@ -13,12 +12,6 @@ PROXY_DECLARE(cal, PROXY_FUNC_DECLARE(int, sub, int, int),
 
 // define
 struct test {
-    const struct test_class {
-        int (*add)(struct test *, int, int);
-        int (*sub)(struct test *, int, int);
-        int (*mul)(struct test *, int, int);
-        void (*print)(struct test *);
-    } *api;
     int ret;
 };
 
@@ -39,7 +32,13 @@ int test_sub(struct test *self, int a, int b)
     return (self->ret = a - b);
 }
 void test_print(struct test *self) { printf("ret: %d\n", self->ret); }
-const static struct test_class class = {
+
+const struct test_class {
+    int (*add)(struct test *, int, int);
+    int (*sub)(struct test *, int, int);
+    int (*mul)(struct test *, int, int);
+    void (*print)(struct test *);
+} class = {
     .add = &test_add,
     .sub = &test_sub,
     .mul = &test_mul,
@@ -51,10 +50,9 @@ PROXY_FUNC_DISPATCH(int, sub, (int, a), (int, b))
 PROXY_FUNC_DISPATCH(int, mul, (int, a), (int, b))
 PROXY_FUNC_DISPATCH(int, add, (int, a), (int, b))
 PROXY_FUNC_DISPATCH(void, print)
-PROXY_DEFINE(cal, &class, sub, mul, add, print)
+PROXY_DEFINE(test_proxy, cal, &class, sub, mul, add, print)
 
 #undef PROXY_NAME
-
 
 void func(struct cal *cal)
 {
@@ -66,6 +64,6 @@ void func(struct cal *cal)
 
 int main(void)
 {
-    struct test t = {.api = &class, .ret = 0};
-    func(PROXY_INSTANTIATE(cal, test_class, &t));
+    struct test t = {.ret = 0};
+    func(PROXY_INSTANTIATE(cal, test_proxy, &t));
 }
