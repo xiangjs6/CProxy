@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stddef.h>
+#include <stdbool.h>
 
 #include "map.h"
 #include "proxy.h"
@@ -20,13 +22,13 @@ struct test {
     int ret;
 };
 
-#define PROXY_NAME test
+#define PROXY_NAME test_class
 
-PROXY_FUNC_DISPATCH(.api->, int, sub, (int, a), (int, b))
-PROXY_FUNC_DISPATCH(.api->, int, mul, (int, a), (int, b))
-PROXY_FUNC_DISPATCH(.api->, int, add, (int, a), (int, b))
-PROXY_FUNC_DISPATCH(.api->, void, print)
-PROXY_DEFINE(cal, sub, mul, add, print)
+PROXY_FUNC_DISPATCH(int, sub, (int, a), (int, b))
+PROXY_FUNC_DISPATCH(int, mul, (int, a), (int, b))
+PROXY_FUNC_DISPATCH(int, add, (int, a), (int, b))
+PROXY_FUNC_DISPATCH(void, print)
+PROXY_DEFINE(cal, struct test, api, sub, mul, add, print)
 
 #undef PROXY_NAME
 
@@ -56,14 +58,14 @@ const static struct test_class class = {
 
 void func(struct cal *cal)
 {
-    printf("%d\n", cal->api->mul(cal->self, 1, 2));
-    printf("%d\n", cal->api->add(cal->self, 1, 2));
-    printf("%d\n", cal->api->sub(cal->self, 9, 2));
-    cal->api->print(cal->self);
+    printf("%d\n", cal->api->mul(&cal->proxy, 1, 2));
+    printf("%d\n", cal->api->add(&cal->proxy, 1, 2));
+    printf("%d\n", cal->api->sub(&cal->proxy, 9, 2));
+    cal->api->print(&cal->proxy);
 }
 
 int main(void)
 {
     struct test t = {.api = &class, .ret = 0};
-    func(PROXY_INSTANTIATE(cal, test, &t));
+    func(PROXY_INSTANTIATE(cal, test_class, &t));
 }
