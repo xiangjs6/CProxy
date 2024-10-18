@@ -67,8 +67,6 @@ struct __proxy {
 
 // instantiate
 #define PROXY_INSTANTIATE(proxy_declare_name, proxy_dispatch, instance)        \
-    &(struct proxy_declare_name)                                               \
-    {                                                                          \
-        .proxy.self = instance, .proxy.class = (proxy_dispatch).proxy.class,   \
-        .api = (proxy_dispatch).api                                            \
-    }
+    (&(struct proxy_declare_name){.proxy.self = instance,                      \
+                                  .proxy.class = (proxy_dispatch).proxy.class, \
+                                  .api = (proxy_dispatch).api})
