@@ -28,7 +28,7 @@
 #define __PROXY_GET_FUNC_NAME(func) .func = &__PROXY_FUNC_NAME(__proxy##func)
 
 #define PROXY_DEFINE(proxy_name, ...)                                          \
-    typeof(*((struct proxy_name *)NULL)->api) __PROXY_COMBINE(                 \
+    static typeof(*((struct proxy_name *)NULL)->api) __PROXY_COMBINE(          \
         __PROXY_COMBINE(__, proxy_name##_proxy_),                              \
         PROXY_NAME) = {MAP_LIST(__PROXY_GET_FUNC_NAME, __VA_ARGS__)};
 
