@@ -70,11 +70,12 @@ struct __proxy {
     static const struct proxy_declare_name dispatch_name = {                   \
         .api = &((const typeof(*((struct proxy_declare_name *)NULL)->api)){    \
             MAP_LIST_UD(__PROXY_GET_FUNC_NAME, class_name, __VA_ARGS__)}),     \
-        .proxy.class = _Generic(_class,                                        \
-        uintptr_t: NULL,                                                       \
-        default: ((typeof(_class)[]){_class})),                                \
-        .proxy.class_offset =                                                  \
-            _Generic(_class, uintptr_t: (uintptr_t)_class, default: 0)};
+        .proxy = {                                                             \
+            .class = _Generic(_class,                                          \
+            uintptr_t: NULL,                                                   \
+            default: ((typeof(_class)[]){_class})),                            \
+            .class_offset =                                                    \
+                _Generic(_class, uintptr_t: (uintptr_t)_class, default: 0)}};
 
 // instantiate
 #define PROXY_INSTANTIATE(proxy_declare_name, proxy_dispatch, instance)        \
