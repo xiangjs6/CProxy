@@ -54,6 +54,15 @@
 #define MAP_LIST(f, ...)                                                       \
     EVAL(MAP_LIST1(f, __VA_ARGS__, ()()(), ()()(), ()()(), 0))
 
+#define MAP_LIST0_UD(f, userdata, x, peek, ...)                                \
+    f(x, userdata)                                                             \
+        MAP_LIST_NEXT(peek, MAP_LIST1_UD)(f, userdata, peek, __VA_ARGS__)
+#define MAP_LIST1_UD(f, userdata, x, peek, ...)                                \
+    f(x, userdata)                                                             \
+        MAP_LIST_NEXT(peek, MAP_LIST0_UD)(f, userdata, peek, __VA_ARGS__)
+
+#define MAP_LIST_UD(f, userdata, ...)                                          \
+    EVAL(MAP_LIST1_UD(f, userdata, __VA_ARGS__, ()()(), ()()(), ()()(), 0))
 
 #define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
 #define PRIMITIVE_CAT(a, ...) a##__VA_ARGS__
