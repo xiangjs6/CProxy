@@ -49,6 +49,8 @@ const struct test_class {
     .print = &test_print,
 };
 
+static const struct test_class *class_fn() { return &class; }
+
 PROXY_FUNC_DISPATCH(test_class, typeof(&class), int, sub, (int, a), (int, b))
 PROXY_FUNC_DISPATCH(test_class, typeof(class) *, int, mul, (int, a), (int, b))
 PROXY_FUNC_DISPATCH(test_class, struct test_class *, int, add, (int, a),
@@ -58,6 +60,7 @@ PROXY_DEFINE(test_class, test_proxy1, cal, &class, sub, mul, add, print)
 
 PROXY_DEFINE(test_class, test_proxy2, cal, offsetof(struct test, class), sub,
              mul, add, print)
+PROXY_DEFINE(test_class, test_proxy3, cal, class_fn, sub, mul, add, print)
 
 void func(struct cal *cal)
 {
@@ -73,4 +76,5 @@ int main(void)
     struct test t = {.class = &class, .ret = 0};
     func(PROXY_INSTANTIATE(cal, test_proxy1, &t));
     func(PROXY_INSTANTIATE(cal, test_proxy2, &t));
+    func(PROXY_INSTANTIATE(cal, test_proxy3, &t));
 }

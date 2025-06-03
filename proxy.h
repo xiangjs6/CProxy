@@ -11,6 +11,7 @@
 
 struct __proxy {
     const void *class;
+    const void *(*class_fn)(void);
     union {
         void *self;
         uintptr_t class_offset;
@@ -65,17 +66,26 @@ struct __proxy {
 #define __PROXY_GET_FUNC_NAME(func, class_name)                                \
     .func = &__PROXY_FUNC_NAME(__proxy##func, class_name)
 
+_Static_assert(
+    sizeof(uintptr_t) >= sizeof(const void *(*)(void)),
+    "uintptr_t must be at least the size of function pointers"
+);
 #define PROXY_DEFINE(class_name, dispatch_name, proxy_declare_name, _class,    \
                      ...)                                                      \
     static const struct proxy_declare_name dispatch_name = {                   \
         .api = &((const typeof(*((struct proxy_declare_name *)NULL)->api)){    \
             MAP_LIST_UD(__PROXY_GET_FUNC_NAME, class_name, __VA_ARGS__)}),     \
-        .proxy = {                                                             \
-            .class = _Generic(_class,                                          \
-            uintptr_t: NULL,                                                   \
-            default: ((typeof(_class)[]){_class})),                            \
-            .class_offset =                                                    \
-                _Generic(_class, uintptr_t: (uintptr_t)_class, default: 0)}};
+        .proxy = {.class = _Generic(_class,                                    \
+                  uintptr_t: NULL,                                             \
+                  typeof(_class) *: NULL,                                      \
+                  default: ((const void *[]){(void *)(uintptr_t)_class})),     \
+                  .class_fn =                                                  \
+                      (const void *(*)(void))(uintptr_t) _Generic(_class,      \
+                      typeof(_class) *: (void *)(uintptr_t)(_class),           \
+                      default: NULL),                                          \
+                  .class_offset = _Generic(_class,                             \
+                  uintptr_t: (uintptr_t)(_class),                              \
+                  default: 0)}};
 
 // instantiate
 #define PROXY_INSTANTIATE(proxy_declare_name, proxy_dispatch, instance)        \
@@ -84,9 +94,9 @@ struct __proxy {
         .proxy.class =                                                         \
             (proxy_dispatch).proxy.class ? *((void **)(proxy_dispatch)         \
                                                  .proxy.class)                 \
-                                         : *(void **)(((char *)instance) +     \
-                                                      (proxy_dispatch)         \
-                                                          .proxy               \
-                                                          .class_offset),      \
+            : (proxy_dispatch).proxy.class_fn                                  \
+                ? (proxy_dispatch).proxy.class_fn()                            \
+                : *(void **)(((char *)instance) +                              \
+                             (proxy_dispatch).proxy.class_offset),             \
         .api = (proxy_dispatch).api,                                           \
     })
